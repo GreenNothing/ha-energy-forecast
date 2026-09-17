@@ -415,7 +415,7 @@ class TestBridgeDayFeatures:
         assert "days_to_next_holiday" in result.columns
         assert "days_since_last_holiday" in result.columns
 
-def test_prediction_uses_configured_holiday_country(self, tmp_path):
+    def test_prediction_uses_configured_holiday_country(self, tmp_path):
         model = EnergyForecastModel(tmp_path, timezone="Europe/Berlin")
         model._country = "DE"
         model._canton = "BY"
