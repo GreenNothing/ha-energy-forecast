@@ -415,6 +415,31 @@ class TestBridgeDayFeatures:
         assert "days_to_next_holiday" in result.columns
         assert "days_since_last_holiday" in result.columns
 
+def test_prediction_uses_configured_holiday_country(self, tmp_path):
+        model = EnergyForecastModel(tmp_path, timezone="Europe/Berlin")
+        model._country = "DE"
+        model._canton = "BY"
+
+        start = pd.Timestamp.now(tz="Europe/Berlin").tz_localize(None).floor("1h")
+        timestamps = pd.date_range(start, periods=48, freq="1h")
+        forecast = pd.DataFrame({"timestamp": timestamps, "temp_c": 0.0})
+        feature_frame = pd.DataFrame({"timestamp": timestamps})
+        for column in model.feature_cols:
+            feature_frame[column] = 0.0
+
+        with patch(
+            "energy_forecast.model._engineer_features",
+            return_value=feature_frame,
+        ) as engineer_features:
+            model._prepare_prediction_X(
+                forecast,
+                live_temp=None,
+                recent_actuals=None,
+            )
+
+        assert engineer_features.call_args.kwargs["country"] == "DE"
+        assert engineer_features.call_args.kwargs["canton"] == "BY"
+
     def test_values_in_range(self):
         """All distance values must be integers in [0, _BRIDGE_CAP]."""
         dates = [f"2026-0{m}-15" for m in range(1, 10)]
